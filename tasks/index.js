@@ -3,12 +3,15 @@ const sharp = require("sharp");
 const path = require("path");
 const fs = require("fs");
 
-// 入力ディレクトリと出力ディレクトリを定義
-const inputDir = "./input"; // 画像が保存されているディレクトリ
-const outputDir = "./output"; // 圧縮後の画像を保存するディレクトリ
+// 画像の圧縮率を定義
+const quality = 80;
 
 // 対象とする画像ファイルの拡張子を定義
 const imageExtensions = [".jpg", ".png"];
+
+// 入力ディレクトリと出力ディレクトリを定義
+const inputDir = "./input"; // 画像が保存されているディレクトリ
+const outputDir = "./output"; // 圧縮後の画像を保存するディレクトリ
 
 // 出力ディレクトリを空にする関数（READMEは除く）
 const clearOutputDir = () => {
@@ -26,8 +29,8 @@ const clearOutputDir = () => {
 const compressImage = async (inputPath, outputPath) => {
   try {
     await sharp(inputPath)
-      .jpeg({ quality: 80 }) // JPEGの場合、品質を80に設定
-      .png({ quality: 80 }) // PNGの場合、品質を80に設定
+      .jpeg({ quality: quality })
+      .png({ quality: quality })
       .toFile(outputPath);
     console.log(`圧縮完了: ${outputPath}`);
   } catch (error) {
