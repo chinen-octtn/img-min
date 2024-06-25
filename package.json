@@ -1,0 +1,14 @@
+{
+  "name": "img-min",
+  "version": "1.0.0",
+  "description": "画像圧縮するツール",
+  "main": "tasks/index.js",
+  "scripts": {
+    "start": "node tasks/index.js"
+  },
+  "author": "maashi",
+  "license": "SEE LICENSE IN LICENSE",
+  "devDependencies": {
+    "sharp": "^0.33.4"
+  }
+}
