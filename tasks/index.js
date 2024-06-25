@@ -1,59 +1,78 @@
-// 必要なモジュールを読み込む
+// ライブラリ・モジュールをインポート
 const sharp = require("sharp");
 const path = require("path");
-const fs = require("fs");
+const fs = require("fs").promises;
 
-// 画像の圧縮率を定義
-const quality = 80;
+// 画像圧縮時の品質設定
+const QUALITY = 80;
+// 圧縮対象の画像ファイル拡張子
+const IMAGE_EXTENSIONS = [".jpg", ".png"];
+// 入力ディレクトリのパス
+const INPUT_DIR = "./input";
+// 出力ディレクトリのパス
+const OUTPUT_DIR = "./output";
 
-// 対象とする画像ファイルの拡張子を定義
-const imageExtensions = [".jpg", ".png"];
-
-// 入力ディレクトリと出力ディレクトリを定義
-const inputDir = "./input"; // 画像が保存されているディレクトリ
-const outputDir = "./output"; // 圧縮後の画像を保存するディレクトリ
-
-// 出力ディレクトリを空にする関数（READMEは除く）
-const clearOutputDir = () => {
-  const files = fs.readdirSync(outputDir);
-  files.forEach((fileName) => {
-    if (fileName !== "README.md") {
-      fs.unlinkSync(path.join(outputDir, fileName));
-    }
-  });
-
-  console.log("出力ディレクトリを空にしました");
-};
-
-// 画像圧縮
-const compressImage = async (inputPath, outputPath) => {
+// 出力ディレクトリ内を空にする関数
+const clearOutputDir = async () => {
   try {
-    await sharp(inputPath)
-      .jpeg({ quality: quality })
-      .png({ quality: quality })
-      .toFile(outputPath);
-    console.log(`圧縮完了: ${outputPath}`);
+    // 出力ディレクトリ内のファイル一覧を取得
+    const files = await fs.readdir(OUTPUT_DIR);
+    // ファイルを順に削除
+    await Promise.all(
+      files.map(async (fileName) => {
+        const filePath = path.join(OUTPUT_DIR, fileName);
+        await fs.unlink(filePath);
+      })
+    );
+    console.log(`出力ディレクトリ内のファイルをすべて削除しました`);
   } catch (error) {
-    console.error(`エラー: ${error.message}`);
+    console.error(
+      `出力ディレクトリのクリア中にエラーが発生しました: ${error.message}`
+    );
   }
 };
 
-// 入力ディレクトリのファイルを1つずつ処理する関数
-const imageMinify = () => {
-  // 入力ディレクトリのファイル一覧を取得（対象となる拡張子のみ）
-  const files = fs
-    .readdirSync(inputDir)
-    .filter((fileName) =>
-      imageExtensions.includes(path.extname(fileName).toLowerCase())
-    );
-
-  files.forEach((fileName) => {
-    const inputPath = path.join(inputDir, fileName);
-    const outputPath = path.join(outputDir, fileName);
-    compressImage(inputPath, outputPath);
-  });
+// 画像を圧縮する関数
+const compressImage = async (inputPath, outputPath) => {
+  try {
+    await sharp(inputPath)
+      .jpeg({ quality: QUALITY }) // JPEG形式で圧縮
+      .png({ quality: QUALITY }) // PNG形式で圧縮
+      .toFile(outputPath);
+    console.log(`圧縮完了: ${outputPath}`);
+  } catch (error) {
+    console.error(`画像圧縮エラー: ${error.message}`);
+  }
 };
 
-// 画像圧縮処理を実行
-clearOutputDir();
-imageMinify();
+// 入力ディレクトリ内の画像ファイルを圧縮して出力ディレクトリに保存する関数
+const imageMinify = async () => {
+  try {
+    // 入力ディレクトリ内のファイル一覧を取得
+    const files = await fs.readdir(INPUT_DIR);
+    // 処理対象の画像ファイルのみをフィルタリング
+    const imageFiles = files.filter((fileName) =>
+      IMAGE_EXTENSIONS.includes(path.extname(fileName).toLowerCase())
+    );
+
+    // 画像ファイルを順に圧縮
+    await Promise.all(
+      imageFiles.map(async (fileName) => {
+        const inputPath = path.join(INPUT_DIR, fileName);
+        const outputPath = path.join(OUTPUT_DIR, fileName);
+        await compressImage(inputPath, outputPath);
+      })
+    );
+  } catch (error) {
+    console.error(`画像圧縮処理中にエラーが発生しました: ${error.message}`);
+  }
+};
+
+// 出力ディレクトリをクリア後、画像圧縮処理を実行
+const run = async () => {
+  await clearOutputDir();
+  await imageMinify();
+};
+
+// 処理を実行し、エラーがあればコンソールに出力
+run().catch(console.error);
